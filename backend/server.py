@@ -50,11 +50,19 @@ def logout():
 
 @app.route('/send', methods=['POST'])
 def send_msg():
-    pass
+    token = request.get_json().get('token')
+    msg = request.get_json().get('msg')
+    recipient_name = request.get_json().get('recipient')
+    messages.send_message(token, msg, recipient_name)
 
 @app.route('/get_msgs', methods=['GET'])
 def get_msgs():
-    pass
+    token = request.get_json().get('token')
+    device = request.get_json().get('deviceID')
+
+    return jsonify({
+        "messages": get_msgs(token, device)
+    })
 
 if __name__ == "__main__":
     app.run(ssl_context=('cert.pem', 'key.pem'), port=6441)

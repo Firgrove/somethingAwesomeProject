@@ -1,5 +1,7 @@
 import random
 import bcrypt
+import base64
+from Crypto.Cipher import AES
 
 '''
 Users are dicts in the form:
@@ -40,7 +42,15 @@ def get_user_by_id(uID):
 Same as above but by username
 '''
 def get_user_by_username(name):
-    i = next((index for (index, user) in enumerate(users) if user["username"] == name), None)
+    return next((user["uID"] for (index, user) in enumerate(users) if user["username"] == name), None)
+
+def encrypt(msg, key):
+    cipher = AES.new(key.encode(), AES.MODE_ECB)
+    text = msg.encode()
+    while len(text) % 16 != 0:
+        text += b' '
+    encrypted_text = cipher.encrypt(text)
+    return base64.b64encode(encrypted_text).decode()
 
 '''
 Backend interface functions
@@ -125,7 +135,9 @@ def get_queued_msgs(token, deviceID):
     if not i:
         raise ValueError("Invalid Token")
     
-    return users[i]["devices"][deviceID]["queued_messages"]
+    msgs = users[i]["devices"][deviceID]["queued_messages"]
+    users[i]["devices"][deviceID]["queued_messages"] = []
+    return msgs
 
 
 # Adds message to the queue for each device
@@ -136,8 +148,9 @@ def add_queued_msg(uID, msg):
     
     for j, device in enumerate(users[i]["devices"]):
         key = device["pub_key"]
-        #TODO: Compute hash of message with each devices private key before adding it to the queue
-        users[i]["devices"][j]["queued_messages"].append(msg)
+        encrypted_msg = encrypt(msg, key)
+
+        users[i]["devices"][j]["queued_messages"].append(encrypted_msg)
 
 if __name__ == "__main__":
     print("testing")
