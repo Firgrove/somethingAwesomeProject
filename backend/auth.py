@@ -3,6 +3,7 @@ from database import database
 import random
 import string
 import hashlib
+import bcrypt
 
 letters = string.ascii_letters
 TOKEN_LEN = 128
@@ -14,7 +15,6 @@ Returns the deviceID so if this is the first time this device has logged in, it 
 '''
 def login(username, password, deviceID, pub_key):
     password = password.encode('utf-8')
-    password = hashlib.sha256(password)
 
     uID = database.check_login(username, password)
     if not uID:
@@ -37,7 +37,7 @@ def login(username, password, deviceID, pub_key):
 
 def register(username, password, pub_key):
     password = password.encode('utf-8')
-    password = hashlib.sha256(password)
+    password = bcrypt.hashpw(password, bcrypt.gensalt(12))
 
     if database.get_user_by_username(username):
         raise ValueError("Username already in use")
@@ -61,5 +61,12 @@ def logout(token):
 
 if __name__ == "__main__":
     print("Testing auth.py")
-    register("test", "test", "key")
+    token, deviceID = register("test", "test", "key")
     print(f'User database: {database.users}')
+    logout(token)
+    print(f'User database: {database.users}')
+    print(login("test", "test", 0, None))
+    try:
+        print(login("test", "invalid", 0, None))
+    except ValueError:
+        print("Test Passed. Failed to login with incorrect password")

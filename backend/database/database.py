@@ -1,4 +1,5 @@
 import random
+import bcrypt
 
 '''
 Users are dicts in the form:
@@ -70,7 +71,7 @@ def register(name, hashed_pass, pub_key):
 
 def check_login(username, password):
     for i, user in enumerate(users):
-        if user["username"] == username and user["password"] == password:
+        if user["username"] == username and bcrypt.checkpw(password, user["pass"]):
             return user["uID"]
     
     return None
@@ -114,9 +115,9 @@ def logout(token):
     if not i:
         return
     
-    for j in range(len(users[i]["device"])):
-        if users[i]["device"][j]["token"] == token:
-            users[i]["device"][j]["token"] = None
+    for j in range(len(users[i]["devices"])):
+        if users[i]["devices"][j]["token"] == token:
+            users[i]["devices"][j]["token"] = None
             break
 
 def get_queued_msgs(token, deviceID):
@@ -133,7 +134,8 @@ def add_queued_msg(uID, msg):
     if not i:
         raise ValueError("uID does not exist")
     
-    for j in range(users[i]["devices"]):
+    for j, device in enumerate(users[i]["devices"]):
+        key = device["pub_key"]
         #TODO: Compute hash of message with each devices private key before adding it to the queue
         users[i]["devices"][j]["queued_messages"].append(msg)
 

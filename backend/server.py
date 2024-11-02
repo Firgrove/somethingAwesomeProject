@@ -17,15 +17,36 @@ def hello():
 
 @app.route('/login', methods=['POST'])
 def login():
-    pass
+    username = request.get_json().get('username')
+    password = request.get_json().get('password')
+    deviceID = request.get_json().get('deviceID')
+    pub_key = request.get_json().get('pub_key')
+
+    token, deviceID = auth.login(username, password, deviceID, pub_key)
+
+    return jsonify({
+        "token": token,
+        "deviceID": deviceID
+    })
 
 @app.route('/register', methods=['POST'])
 def register():
-    pass
+    username = request.get_json().get('username')
+    password = request.get_json().get('password')
+    pub_key = request.get_json().get('pub_key')
+
+    token, deviceID = auth.register(username, password, pub_key)
+
+    return jsonify({
+        "token": token,
+        "deviceID": deviceID
+    })
 
 @app.route('/logout')
 def logout():
-    pass
+    token = request.get_json().get('token')
+
+    auth.login(token)
 
 @app.route('/send', methods=['POST'])
 def send_msg():
