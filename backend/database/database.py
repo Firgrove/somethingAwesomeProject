@@ -1,7 +1,11 @@
 import random
 import bcrypt
 import base64
-from Crypto.Cipher import AES
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5 as Cipher_PKCS1_v1_5
+from Crypto.Cipher import PKCS1_OAEP
+
+from base64 import b64decode,b64encode
 
 '''
 Users are dicts in the form:
@@ -24,7 +28,9 @@ users = [{
     "username": "admin",
     "pass": "admin",
     "devices": [{
-        "token": "token"
+        "token": "token",
+        "pub_key": "test_key",
+        "queued_messages": []
     }]
 }]
 
@@ -44,13 +50,12 @@ Same as above but by username
 def get_user_by_username(name):
     return next((user["uID"] for (index, user) in enumerate(users) if user["username"] == name), None)
 
-def encrypt(msg, key):
-    cipher = AES.new(key.encode(), AES.MODE_ECB)
-    text = msg.encode()
-    while len(text) % 16 != 0:
-        text += b' '
-    encrypted_text = cipher.encrypt(text)
-    return base64.b64encode(encrypted_text).decode()
+def encrypt(msg, externKey):
+    msg = str.encode(msg)
+    public_key = RSA.importKey(externKey)
+    encryptor = PKCS1_OAEP.new(public_key)
+    encrypted = encryptor.encrypt(msg)
+    return encrypted
 
 '''
 Backend interface functions
@@ -88,7 +93,7 @@ def check_login(username, password):
 
 def add_token(uID, token, deviceID):
     i = get_user_by_id(uID)
-    if not i:
+    if i == None:
         raise ValueError("User ID or Device ID not valid")
     
     if deviceID >= len(users[i]["devices"]):
@@ -100,7 +105,7 @@ def add_token(uID, token, deviceID):
 
 def add_device(uID, token, pub_key):
     i = get_user_by_id(uID)
-    if not i:
+    if i == None:
         raise ValueError("User does not exist")
     
     users[i]["devices"].append({
@@ -122,7 +127,7 @@ def check_token(token):
 
 def logout(token):
     i = check_token(token)
-    if not i:
+    if i == None:
         return
     
     for j in range(len(users[i]["devices"])):
@@ -132,7 +137,7 @@ def logout(token):
 
 def get_queued_msgs(token, deviceID):
     i = check_token(token)
-    if not i:
+    if i == None:
         raise ValueError("Invalid Token")
     
     msgs = users[i]["devices"][deviceID]["queued_messages"]
@@ -143,7 +148,8 @@ def get_queued_msgs(token, deviceID):
 # Adds message to the queue for each device
 def add_queued_msg(uID, msg):
     i = get_user_by_id(uID)
-    if not i:
+    print(i)
+    if i == None:
         raise ValueError("uID does not exist")
     
     for j, device in enumerate(users[i]["devices"]):
@@ -155,3 +161,13 @@ def add_queued_msg(uID, msg):
 if __name__ == "__main__":
     print("testing")
     print(get_user_by_id(0))
+    print(users)
+
+    new_key = RSA.generate(2048)
+    print(new_key)
+    
+    public_key = new_key.publickey().exportKey("DER")
+    print(encrypt('hi', public_key))
+
+
+    # add_queued_msg(0, public_key)
