@@ -1,5 +1,3 @@
-const crypto = require('crypto');
-
 export const decrypt = (message, key) => {
     const encrypted_bytes = Buffer.from(encrypted_text, 'base64');
     const iv = encrypted_bytes.slice(0, 16);
@@ -19,8 +17,9 @@ export const decrypt = (message, key) => {
  */
 export const apiCallBody = (path, body, method) => {
     return new Promise((resolve, reject) => {
-        fetch('http://localhost:5005/' + path, {
+        fetch('https://localhost:6441/' + path, {
             method: method,
+            mode: 'cors',
             headers: {
                 'Content-type': 'application/json',
                 // Always include token if we have one. Returns null if token does not exist
@@ -32,6 +31,7 @@ export const apiCallBody = (path, body, method) => {
                 throw new Error('Network Error. Please try again later');
             })
             .then((response) => {
+                console.log(response);
                 return response.json();
             })
             .then((data) => {
@@ -43,7 +43,7 @@ export const apiCallBody = (path, body, method) => {
                 resolve(data);
 
             }).catch((reason) => {
-                reject(reason);
+                reject("Failed. Please check your inputs and try again");
             });
     }); 
 };
@@ -51,7 +51,7 @@ export const apiCallBody = (path, body, method) => {
 
 export const apiCallGet = (path, queryString) => {
     return new Promise((resolve, reject) => {
-        fetch('http://localhost:5005/' + path + '?' + queryString, {
+        fetch('https://localhost:6441/' + path + '?' + queryString, {
             method: 'GET',
             headers: {
             'Content-type': 'application/json',

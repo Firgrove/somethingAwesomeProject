@@ -15,8 +15,8 @@ Returns the deviceID so if this is the first time this device has logged in, it 
 '''
 def login(username, password, deviceID, pub_key):
     password = password.encode('utf-8')
-
     uID = database.check_login(username, password)
+    print(uID)
     if not uID:
         raise ValueError("Username or password are not valid")
 
@@ -30,6 +30,7 @@ def login(username, password, deviceID, pub_key):
     if deviceID == None:
         deviceID = database.add_device(uID, token, pub_key)
     else:
+        deviceID = int(deviceID)
         database.add_token(uID, token, deviceID)
 
     return token, deviceID
@@ -37,7 +38,7 @@ def login(username, password, deviceID, pub_key):
 
 def register(username, password, pub_key):
     password = password.encode('utf-8')
-    password = bcrypt.hashpw(password, bcrypt.gensalt(12))
+    password = bcrypt.hashpw(password, bcrypt.gensalt())
 
     if database.get_user_by_username(username):
         raise ValueError("Username already in use")
@@ -64,6 +65,7 @@ if __name__ == "__main__":
     token, deviceID = register("test", "test", "key")
     print(f'User database: {database.users}')
     logout(token)
+    print(f'Checking login: {database.check_login("test", "test".encode("utf-8"))}')
     print(f'User database: {database.users}')
     print(login("test", "test", 0, None))
     try:

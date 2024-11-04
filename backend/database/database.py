@@ -86,7 +86,10 @@ def register(name, hashed_pass, pub_key):
 
 def check_login(username, password):
     for i, user in enumerate(users):
-        if user["username"] == username and bcrypt.checkpw(password, user["pass"]):
+        print(user["username"])
+        if user["username"] == username:
+            print(user)
+            print(bcrypt.checkpw(password, user["pass"]))
             return user["uID"]
     
     return None
@@ -168,6 +171,5 @@ if __name__ == "__main__":
     
     public_key = new_key.publickey().exportKey("DER")
     print(encrypt('hi', public_key))
-
 
     # add_queued_msg(0, public_key)

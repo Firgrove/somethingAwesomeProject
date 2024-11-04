@@ -6,24 +6,47 @@ import {
 
 console.log('frontend starting up');
 
-const handleLogin = (form) => {
+async function handleLogin(form) {
     console.log('logging in');
     if (form['username'].length === 0) {alert('please enter a username')}
     if (form['password'].length === 0) {alert('please enter a passsword')}
 
-    pub_key = null;
-    if (localStorage.getItem('deviceID')) {
-        // TODO: Generate public private key pair
+    let pub_key = null;
+    if (!localStorage.getItem('deviceID')) {
+        // Generate public private key pair
+        try {
+            let keyPair = await window.crypto.subtle.generateKey(
+                {
+                name: "RSA-OAEP",
+                modulusLength: 4096,
+                publicExponent: new Uint8Array([1, 0, 1]),
+                hash: "SHA-256",
+                },
+                true,
+                ["encrypt", "decrypt"],
+            );
+            
+            console.log(`keypair: ${keyPair}`);
+        } catch (error) {
+            alert("login failed, username or password are likely wrong.");
+            return;
+        }
     } 
 
-    body = {
+    localStorage.setItem('username', form['username'])
+
+    const body = {
         'username': form['username'].value,
         'password': form['password'].value,
-        'deviceID': localStorage.getItem('deviceID')*1,
+        'deviceID': localStorage.getItem('deviceID'),
         'pub_key': pub_key
     }
 
-    apiCallBody('/login', body, 'POST').then((data) => {
+    console.log(body);
+    console.log(JSON.stringify(body));
+
+    apiCallBody('login', body, 'POST').then((data) => {
+        console.log('server succeeded');
         console.log(data);
         localStorage.setItem('deviceID', data.deviceID);
         localStorage.setItem('token', data.token);
@@ -32,15 +55,36 @@ const handleLogin = (form) => {
     });
 }
 
-const handleRegister = (form) => {
+async function handleRegister(form) {
     console.log('registering account');
 
     if (form['username'].length === 0) {alert('please enter a username')}
     if (form['password'].length === 0) {alert('please enter a passsword')}
 
-    // TODO: Generate public private key pair
+    localStorage.setItem('username', form['username'])
 
-    body = {
+    // Generate public private key pair
+    try {
+        let keyPair = await window.crypto.subtle.generateKey(
+            {
+              name: "RSA-OAEP",
+              modulusLength: 4096,
+              publicExponent: new Uint8Array([1, 0, 1]),
+              hash: "SHA-256",
+            },
+            true,
+            ["encrypt", "decrypt"],
+        );
+        
+        console.log(`keypair: ${keyPair}`);
+    } catch (error) {
+        alert(error);
+        return;
+    }
+      
+    
+
+    const body = {
         'username': form['username'].value,
         'password': form['password'].value,
         'pub_key': null
@@ -48,19 +92,55 @@ const handleRegister = (form) => {
 
     localStorage.setItem('deviceID', 0)
 
-    apiCallBody('/register', body, 'POST').then((data) => {
+    apiCallBody('register', body, 'POST').then((data) => {
+        console.log('server succeeded');
         console.log(data);
         localStorage.setItem('token', data.token);
+    }).catch(() => {
+        alert('Failed to create account. Please check your details and try again');
     });
 }
 
 const logout = () => {
     if (!localStorage.getItem('token')) {alert('already logged out')}
 
-    body = {'token': localStorage.getItem('token')}
+    const body = {'token': localStorage.getItem('token')}
     localStorage.removeItem('token');
     apiCallBody('logout', body, 'POST');
 }
 
-// TODO: Decryption of messages
-// The library I have used so far is symmetric i think. I'll need to fix this
+const handleLoginSubmit = (event) => {
+    event.preventDefault();
+    const form = event.target;
+
+    handleLogin(form);
+}
+
+const handleRegisterForm = (event) => {
+    event.preventDefault();
+    const form = event.target;
+
+    handleRegister(form);
+}
+
+const renderRegister = (event) => {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('messages').style.display = 'none';
+    document.getElementById('register').style.display = 'flex';
+}
+
+const renderLogin = (event) => {
+    document.getElementById('login').style.display = 'flex';
+    document.getElementById('messages').style.display = 'none';
+    document.getElementById('register').style.display = 'none';
+}
+
+
+
+console.log('adding event listeners')
+
+document.getElementById('logout-button').addEventListener('click', logout);
+document.getElementById('login-form').addEventListener('submit', handleLoginSubmit);
+document.getElementById('register-form').addEventListener('submit', handleRegisterForm);
+document.getElementById('goto-page-register').addEventListener('click', renderRegister);
+document.getElementById('goto-page-login').addEventListener('click', renderLogin);

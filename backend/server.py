@@ -22,6 +22,8 @@ def login():
     deviceID = request.get_json().get('deviceID')
     pub_key = request.get_json().get('pub_key')
 
+    print(database.users)
+
     token, deviceID = auth.login(username, password, deviceID, pub_key)
 
     return jsonify({
