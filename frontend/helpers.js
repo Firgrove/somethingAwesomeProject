@@ -43,7 +43,7 @@ export const apiCallBody = (path, body, method) => {
                 resolve(data);
 
             }).catch((reason) => {
-                reject("Failed. Please check your inputs and try again");
+                reject(reason);
             });
     }); 
 };
@@ -71,3 +71,31 @@ export const apiCallGet = (path, queryString) => {
             });
     });
 };
+
+
+// Convert an ArrayBuffer into a string.
+// From https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
+function arrayBufToString(buf) {
+	return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
+function pemEncode(label, data) {
+	const base64encoded = window.btoa(data);
+	const base64encodedWrapped = base64encoded.replace(/(.{64})/g, "$1\n");
+	return `-----BEGIN ${label}-----\n${base64encodedWrapped}\n-----END ${label}-----`;
+}
+
+async function exportKeyAsString(format, key) {
+	const exported = await window.crypto.subtle.exportKey(format, key);
+	return arrayBufToString(exported);
+}
+
+export async function pemEncodedPrivateKey(keyPair) {
+	const exported = await exportKeyAsString("pkcs8", keyPair.privateKey);
+	return pemEncode("PRIVATE KEY", exported);
+}
+
+export async function pemEncodedPublicKey(keyPair) {
+	const exported = await exportKeyAsString("spki", keyPair.publicKey);
+	return pemEncode("PUBLIC KEY", exported);
+}

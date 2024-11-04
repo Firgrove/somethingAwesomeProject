@@ -11,6 +11,11 @@ import messages
 app = Flask(__name__)
 CORS(app)
 
+@app.after_request
+def after_request_func(response):
+  response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+  return response
+
 @app.route('/')
 def hello():
     return 'hello'
@@ -54,8 +59,9 @@ def logout():
 def send_msg():
     token = request.get_json().get('token')
     msg = request.get_json().get('msg')
+    sender = request.get_json().get('sender')
     recipient_name = request.get_json().get('recipient')
-    messages.send_message(token, msg, recipient_name)
+    messages.send_message(token, msg, recipient_name, sender)
 
 @app.route('/get_msgs', methods=['GET'])
 def get_msgs():

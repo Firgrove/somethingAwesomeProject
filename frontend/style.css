@@ -43,3 +43,12 @@ header {
     border-bottom: solid gray 1px;
     box-shadow: 0 4px 2px -2px gray;
 }
+
+#messages {
+    flex-direction: column;
+    gap: 20px;
+}
+
+#send-message-form {
+    max-height: 400px;
+}

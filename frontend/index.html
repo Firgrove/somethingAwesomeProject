@@ -55,7 +55,25 @@
     </div>
 
     <div class="page" id="messages">
+        <form id="send-message-form">
+            <h1>Send a message</h1>
+            <div class="form-floating">
+                <input type="text" class="form-control" id="recipient-username" name="recipient">
+                <label for="recipient">Recipient Username</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control" id="messsage-input" name="message">
+                <label for="message">Message</label>
+            </div>
 
+            <div class="d-grid col-6 mx-auto">
+                <button type="submit" id="send-button" class="btn btn-primary btn-custom-primary">Send</button>
+            </div>
+        </form>
+
+        <div id="message-container"></div>
+
+        <button type="button" class="btn btn-primary btn-custom-primary" id="load-messages">load-messages</button>
 
     </div>
 

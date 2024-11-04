@@ -149,15 +149,19 @@ def get_queued_msgs(token, deviceID):
 
 
 # Adds message to the queue for each device
-def add_queued_msg(uID, msg):
+def add_queued_msg(uID, msg, sender):
     i = get_user_by_id(uID)
-    print(i)
     if i == None:
         raise ValueError("uID does not exist")
     
     for j, device in enumerate(users[i]["devices"]):
         key = device["pub_key"]
         encrypted_msg = encrypt(msg, key)
+
+        msg_dict = {
+            "encrypted_msg": encrypted_msg,
+            "sender": sender
+        }
 
         users[i]["devices"][j]["queued_messages"].append(encrypted_msg)
 

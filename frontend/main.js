@@ -1,10 +1,18 @@
 import { 
     apiCallGet, 
     apiCallBody, 
-    decrypt
+    decrypt,
+    spkiToPEM
  } from './helpers.js';
 
 console.log('frontend starting up');
+
+const renderMessages = () => {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('messages').style.display = 'flex';
+    document.getElementById('register').style.display = 'none';
+    document.getElementById('logout-button').style.display = 'block';
+}
 
 async function handleLogin(form) {
     console.log('logging in');
@@ -26,7 +34,10 @@ async function handleLogin(form) {
                 ["encrypt", "decrypt"],
             );
             
-            console.log(`keypair: ${keyPair}`);
+            // Export key to send to python
+            console.log(`keypair: ${keyPair.publicKey}`);
+            const pemPubKey = spkiToPEM(window.crypto.subtle.exportKey("spki",keyPair.publicKey));
+            console.log(pemPubKey)
         } catch (error) {
             alert("login failed, username or password are likely wrong.");
             return;
@@ -50,6 +61,7 @@ async function handleLogin(form) {
         console.log(data);
         localStorage.setItem('deviceID', data.deviceID);
         localStorage.setItem('token', data.token);
+        renderMessages();
     }).catch((error) => {
         alert(`login failed with error: ${error}`);
     });
@@ -76,14 +88,13 @@ async function handleRegister(form) {
             ["encrypt", "decrypt"],
         );
         
-        console.log(`keypair: ${keyPair}`);
+        const pemPubKey = spkiToPEM(window.crypto.subtle.exportKey("spki",keyPair.publicKey));
+        console.log(pemPubKey)
     } catch (error) {
         alert(error);
         return;
     }
       
-    
-
     const body = {
         'username': form['username'].value,
         'password': form['password'].value,
@@ -96,8 +107,9 @@ async function handleRegister(form) {
         console.log('server succeeded');
         console.log(data);
         localStorage.setItem('token', data.token);
+        renderMessages();
     }).catch(() => {
-        alert('Failed to create account. Please check your details and try again');
+        alert('Failed to create account. Please check your details and try again'); 
     });
 }
 
@@ -106,6 +118,7 @@ const logout = () => {
 
     const body = {'token': localStorage.getItem('token')}
     localStorage.removeItem('token');
+    renderLogin();
     apiCallBody('logout', body, 'POST');
 }
 
@@ -127,12 +140,14 @@ const renderRegister = (event) => {
     document.getElementById('login').style.display = 'none';
     document.getElementById('messages').style.display = 'none';
     document.getElementById('register').style.display = 'flex';
+    document.getElementById('logout-button').style.display = 'none';
 }
 
 const renderLogin = (event) => {
     document.getElementById('login').style.display = 'flex';
     document.getElementById('messages').style.display = 'none';
     document.getElementById('register').style.display = 'none';
+    document.getElementById('logout-button').style.display = 'none';
 }
 
 
